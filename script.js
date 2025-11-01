@@ -190,8 +190,11 @@ document.getElementById("dataForm").addEventListener("submit", e => {
   const entry = {};
 
   for (let [key, value] of data.entries()) {
-    if (["FileName", "Page", "CLE"].includes(key)) entry[key] = value;
-    else {
+    key = key.replace("[]", ""); // ✅ Normalize checkbox field names
+
+    if (["FileName", "Page", "CLE"].includes(key)) {
+      entry[key] = value;
+    } else {
       if (!entry[key]) entry[key] = [];
       entry[key].push(value);
     }
@@ -258,23 +261,22 @@ document.getElementById("deleteAllBtn").addEventListener("click", () => {
 document.getElementById("exportBtn").addEventListener("click", () => {
   if (allEntries.length === 0) return alert("No data available to export.");
 
-  // ✅ Include all field IDs (template headers)
   const allFieldIds = ["FileName", "Page", "CLE", ...fields.map(f => f.id)];
 
   const rows = allEntries.map((entry, idx) => {
     const row = { No: idx + 1 };
 
-    // Include all fields, even if empty
     allFieldIds.forEach(id => {
       const val = entry[id];
-      row[id] = Array.isArray(val) ? val.join(", ") : (val || "");
+      row[id] = Array.isArray(val) ? val.join(", ") : val || "";
     });
 
     return row;
   });
 
-  const worksheet = XLSX.utils.json_to_sheet(rows, { header: ["No", ...allFieldIds] });
+  const worksheet = XLSX.utils.json_to_sheet(rows);
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Survey Data");
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
   XLSX.writeFile(workbook, "form_data.xlsx");
+  alert("✅ Excel file exported successfully!");
 });
